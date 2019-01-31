@@ -8,6 +8,7 @@
 
 LOGFILE="./redelk-inintialsetup.log"
 INSTALLER="RedELK cert and key installer"
+OPENSSL_CONFIG_FILE="./certs/config.cnf"
 
 echoerror() {
     printf "`date +'%b %e %R'` $INSTALLER - ${RC} * ERROR ${EC}: $@\n" >> $LOGFILE 2>&1
@@ -16,15 +17,8 @@ echoerror() {
 echo "This script will generate necessary keys RedELK deployments"
 printf "`date +'%b %e %R'` $INSTALLER - Starting installer\n" > $LOGFILE 2>&1
 
-if ! [ $# -eq 1 ] ; then
-    echo "[X] ERROR missing parameter"
-    echo "[X] require 1st parameter: path of openssl config file"
-    echoerror "Incorrect amount of parameters"
-    exit 1
-fi
-
-if [  ! -f $1 ];then
-    echo "[X]  ERROR Could not find openssl config file. Stopping"
+if [  ! -f $OPENSSL_CONFIG_FILE ];then
+    echo "[X]  ERROR Could not find openssl config file at $OPENSSL_CONFIG_FILE. Stopping"
     echoerror "Could not find openssl config file"
     exit 1
 fi >> $LOGFILE 2>&1
@@ -49,7 +43,7 @@ fi
 
 echo "Creating Certificate Authority"
 if [ ! -f "./certs/redelkCA.crt" ]; then
-    openssl req -new -x509 -days 3650 -nodes -key ./certs/redelkCA.key -sha256 -out ./certs/redelkCA.crt -extensions v3_ca -config $1
+    openssl req -new -x509 -days 3650 -nodes -key ./certs/redelkCA.key -sha256 -out ./certs/redelkCA.crt -extensions v3_ca -config $OPENSSL_CONFIG_FILE
 fi  >> $LOGFILE 2>&1
 ERROR=$?
 if [ $ERROR -ne 0 ]; then
@@ -69,7 +63,7 @@ fi
 echo "Generating certificate for ELK server"
 #if !  [ -f "./certs/elkserver.key" ] || [ -f "./certs/elkserver.csr" ]; then
 if [ ! -f "./certs/elkserver.csr" ]; then
-    openssl req -sha512 -new -key ./certs/elkserver.key -out ./certs/elkserver.csr -config $1
+    openssl req -sha512 -new -key ./certs/elkserver.key -out ./certs/elkserver.csr -config $OPENSSL_CONFIG_FILE
 fi >> $LOGFILE 2>&1
 ERROR=$?
 if [ $ERROR -ne 0 ]; then
@@ -78,8 +72,8 @@ fi
 
 echo "Signing certificate of ELK server with our new CA"
 if [ ! -f "./certs/elkserver.crt" ]; then
-    openssl x509 -days 3650 -req -sha512 -in ./certs/elkserver.csr -CAcreateserial -CA ./certs/redelkCA.crt -CAkey ./certs/redelkCA.key -out ./certs/elkserver.crt -extensions v3_req -extfile $1
-    #openssl x509 -req -extfile $1 -extensions v3_req -days 3650 -in ./certs/elkserver.csr -CA ./certs/redelkCA.crt -CAkey ./certs/redelkCA.key -CAcreateserial -out ./certs/elkserver.crt
+    openssl x509 -days 3650 -req -sha512 -in ./certs/elkserver.csr -CAcreateserial -CA ./certs/redelkCA.crt -CAkey ./certs/redelkCA.key -out ./certs/elkserver.crt -extensions v3_req -extfile $OPENSSL_CONFIG_FILE
+    #openssl x509 -req -extfile $OPENSSL_CONFIG_FILE -extensions v3_req -days 3650 -in ./certs/elkserver.csr -CA ./certs/redelkCA.crt -CAkey ./certs/redelkCA.key -CAcreateserial -out ./certs/elkserver.crt
 fi >> $LOGFILE 2>&1
 ERROR=$?
 if [ $ERROR -ne 0 ]; then
@@ -146,7 +140,7 @@ if [ $ERROR -ne 0 ]; then
     echoerror "Could not TGZ for teamserver directory (Error Code: $ERROR)."
 fi
 
-grep -i error $LOGFILE 2>$1
+grep -i error $LOGFILE 2>&1
 ERROR=$?
 if [ $ERROR -eq 0 ]; then
     echo "[X] There were errors while running this installer. Manually check the log file $LOGFILE. Exiting now."

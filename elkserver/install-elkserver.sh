@@ -128,8 +128,9 @@ if [ $ERROR -ne 0 ]; then
     echoerror "Could not copy logstash config (Error Code: $ERROR)."
 fi
 
-echo "Copying CA file"
+echo "Copying CA file and setting permissions"
 cp -r ./logstash/certs /etc/logstash/ >> $LOGFILE 2>&1
+chown redelk:redelk /etc/logstash/certs/* >> $LOGFILE 2>&1
 ERROR=$?
 if [ $ERROR -ne 0 ]; then
     echoerror "Could not copy CA file (Error Code: $ERROR)."
