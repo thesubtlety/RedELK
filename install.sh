@@ -20,7 +20,7 @@ declare -a redir_list=("10.0.10.100")
 find ./ -type f -exec sed -i 's/Europe\/Amsterdam/UTC/g' {} \;
 
 #update cert info
-sed -i 's/C\ =\ MODIFYME.*$/C\ =\ US' certs/config.cnf
+sed -i 's/C\ =\ MODIFYME.*$/C\ =\ US/' certs/config.cnf
 sed -i 's/MODIFYME.*$/TrustMe/g' certs/config.cnf
 sed -i "s/dnsnameofyourredelkserver/$RED_ELK_SERVER/" certs/config.cnf
 sed -i "s/someseconddnsname/$RED_ELK_SERVER/" certs/config.cnf
@@ -66,14 +66,14 @@ sudo ./install-elkserver.sh
 EOF
 for TEAMSERVER_IP in "${teamserver_list[@]}"; do
 	ssh -i $PEM ec2-user@$RED_ELK_SERVER_IP <<EOF
-sudo echo "#*/2 * * * * redelk /usr/share/redelk/bin/getremotelogs.sh $TEAMSERVER_IP TeamServer scponly" >> /etc/cron.d/redelk #s/kali/tsdisplayname/
+echo "*/2 * * * * redelk /usr/share/redelk/bin/getremotelogs.sh $TEAMSERVER_IP TeamServer scponly" |sudo tee --append /etc/cron.d/redelk #s/kali/tsdisplayname/
 EOF
 done
 
-echo "Update scripts in /etc/redelk/* as needed."
+echo "\n[+] Update scripts in /etc/redelk/* as needed."
 echo "If things aren't working, check the following logs on the Elk server"
-echo "/var/log/filebeat/filebeat"
-echo "/var/log/filestash/filestash-plain.log"
+echo "\t/var/log/filebeat/filebeat"
+echo "\t/var/log/filestash/filestash-plain.log"
 echo
 echo "Done"
 
